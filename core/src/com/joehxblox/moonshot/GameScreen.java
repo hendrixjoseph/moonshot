@@ -70,7 +70,9 @@ public class GameScreen extends ScreenAdapter {
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             if (cannotPanLeft || cannotPanRight && this.sprite.getX() > 250) {
-                this.sprite.translateX(-motion);
+                if (this.sprite.getX() - motion > 0) {
+                    this.sprite.translateX(-motion);
+                }
             } else {
                 this.camera.translate(-motion, 0);
             }
@@ -80,7 +82,9 @@ public class GameScreen extends ScreenAdapter {
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             if (cannotPanRight || cannotPanLeft && this.sprite.getX() < 250) {
-                this.sprite.translateX(motion);
+                if (this.sprite.getX() + motion < this.tiledMapRenderer.getViewBounds().width - this.sprite.getWidth()) {
+                    this.sprite.translateX(motion);
+                }
             } else {
                 this.camera.translate(motion, 0);
             }
