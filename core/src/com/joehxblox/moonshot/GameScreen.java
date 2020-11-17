@@ -65,21 +65,24 @@ public class GameScreen extends ScreenAdapter {
 
         float motion = 200 * delta;
 
+        boolean cannotPanRight = this.tiledMapRenderer.getViewBounds().x + motion > getMapWidth() - this.tiledMapRenderer.getViewBounds().width;
+        boolean cannotPanLeft = this.tiledMapRenderer.getViewBounds().x - motion < 0;
+
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            if (this.sprite.getX() > 250 && this.tiledMapRenderer.getViewBounds().x - motion > 0) {
-                this.camera.translate(-motion, 0);
-            } else if (this.sprite.getX() - motion > 0) {
+            if (cannotPanLeft || cannotPanRight && this.sprite.getX() > 250) {
                 this.sprite.translateX(-motion);
+            } else {
+                this.camera.translate(-motion, 0);
             }
 
             this.sprite.rotate(motion);
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            if (this.sprite.getX() > 250 && this.tiledMapRenderer.getViewBounds().x + motion < getMapWidth() - this.tiledMapRenderer.getViewBounds().width) {
-                this.camera.translate(motion, 0);
-            } else if (this.sprite.getX() + motion <  this.tiledMapRenderer.getViewBounds().width - this.sprite.getWidth()) {
+            if (cannotPanRight || cannotPanLeft && this.sprite.getX() < 250) {
                 this.sprite.translateX(motion);
+            } else {
+                this.camera.translate(motion, 0);
             }
 
             this.sprite.rotate(-motion);
