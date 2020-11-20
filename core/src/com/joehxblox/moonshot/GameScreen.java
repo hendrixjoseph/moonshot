@@ -125,7 +125,9 @@ public class GameScreen extends ScreenAdapter {
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            this.moon.translateY(motion);
+            if (this.moon.getY() + this.moon.getHeight() + motion < Gdx.graphics.getHeight()) {
+                this.moon.translateY(motion);
+            }
         } else {
             final Array<TiledMapTileLayer.Cell> cell = getTilesBeneath(this.moon, motion);
 
@@ -142,6 +144,7 @@ public class GameScreen extends ScreenAdapter {
 
         this.sb.begin();
 
+        printDebug();
         this.moon.draw(this.sb);
         this.sb.end();
     }
