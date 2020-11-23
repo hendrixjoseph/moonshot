@@ -15,6 +15,7 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Predicate;
@@ -32,6 +33,11 @@ public class GameScreen extends ScreenAdapter {
     private final OrthogonalTiledMapRenderer tiledMapRenderer;
     private final SpriteBatch sb;
     private final Sprite moon;
+
+    private final Rectangle leftButton;
+    private final Rectangle centerButton;
+    private final Rectangle rightButton;
+
 
     private final BitmapFont font = new BitmapFont();
 
@@ -51,15 +57,10 @@ public class GameScreen extends ScreenAdapter {
         this.moon.translateY(64.01f);
         this.moon.translateX(10);
 
-        Gdx.input.setInputProcessor(new InputAdapter() {
-            @Override
-            public boolean touchDown(final int screenX, final int screenY, final int pointer, final int button) {
-                final TiledMapTileLayer.Cell cell = getTileCellAt(screenX, screenY);
-                cell.setRotation((cell.getRotation() + 1) % 4);
-
-                return false;
-            }
-        });
+        float buttonWidth = w * 0.25f;
+        leftButton = new Rectangle(0, 0, buttonWidth, h);
+        centerButton = new Rectangle(buttonWidth, 0, w - 2 * buttonWidth, h);
+        rightButton = new Rectangle(w - buttonWidth, 0, buttonWidth, h);
     }
 
     private TiledMapTileLayer.Cell getTileCellAt(final float screenX, final float screenY) {
@@ -82,7 +83,6 @@ public class GameScreen extends ScreenAdapter {
         };
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
         Gdx.gl.glClearColor(1, 0, 0, 1);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -92,7 +92,7 @@ public class GameScreen extends ScreenAdapter {
         final boolean cannotPanRight = this.tiledMapRenderer.getViewBounds().x + motion > getMapWidth() - this.tiledMapRenderer.getViewBounds().width;
         final boolean cannotPanLeft = this.tiledMapRenderer.getViewBounds().x - motion < 0;
 
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || rectanglePressed(leftButton)) {
             final Array<TiledMapTileLayer.Cell> cell = getTilesToTheLeft(this.moon, motion);
 
             if (!cell.select(predicate).iterator().hasNext()) {
@@ -108,7 +108,7 @@ public class GameScreen extends ScreenAdapter {
             this.moon.rotate(motion);
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || rectanglePressed(rightButton)) {
             final Array<TiledMapTileLayer.Cell> cell = getTilesToTheRight(this.moon, motion);
 
             if (!cell.select(predicate).iterator().hasNext()) {
@@ -124,7 +124,7 @@ public class GameScreen extends ScreenAdapter {
             this.moon.rotate(-motion);
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.UP) || rectanglePressed(centerButton)) {
             if (this.moon.getY() + this.moon.getHeight() + motion < Gdx.graphics.getHeight()) {
                 this.moon.translateY(motion);
             }
@@ -147,6 +147,10 @@ public class GameScreen extends ScreenAdapter {
         printDebug();
         this.moon.draw(this.sb);
         this.sb.end();
+    }
+
+    private boolean rectanglePressed(Rectangle rectangle) {
+        return Gdx.input.isTouched() && rectangle.contains(Gdx.input.getX(), Gdx.input.getY());
     }
 
     private Array<TiledMapTileLayer.Cell> getTilesToTheRight(final Sprite sprite, final float motion) {
