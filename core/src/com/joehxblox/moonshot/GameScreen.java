@@ -2,7 +2,6 @@ package com.joehxblox.moonshot;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -25,17 +24,24 @@ public class GameScreen extends ScreenAdapter {
     private final Moonshot game;
 
     private final OrthographicCamera camera = new OrthographicCamera();
+    private final BitmapFont font = new BitmapFont();
+    private final SpriteBatch sb = new SpriteBatch();
+
     private final OrthogonalTiledMapRenderer tiledMapRenderer;
-    private final SpriteBatch sb;
     private final Sprite moon;
 
     private final Rectangle leftButton;
     private final Rectangle centerButton;
     private final Rectangle rightButton;
 
-    private final BitmapFont font = new BitmapFont();
-
     private final float scale;
+
+    private final Predicate<Cell> cellFloorPredicate = new Predicate<Cell>() {
+        @Override
+        public boolean evaluate(final Cell arg0) {
+            return isCellFloor(arg0);
+        }
+    };
 
     public GameScreen(final Moonshot game) {
         this.game = game;
@@ -53,7 +59,6 @@ public class GameScreen extends ScreenAdapter {
 
         this.tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap, this.scale);
 
-        this.sb = new SpriteBatch();
         this.moon = new Sprite(new Texture(Gdx.files.internal("moon.png")));
         this.moon.translateY(64.01f);
         this.moon.translateX(10);
@@ -62,26 +67,11 @@ public class GameScreen extends ScreenAdapter {
         this.leftButton = new Rectangle(0, 0, buttonWidth, h);
         this.centerButton = new Rectangle(buttonWidth, 0, w - 2 * buttonWidth, h);
         this.rightButton = new Rectangle(w - buttonWidth, 0, buttonWidth, h);
-
-        Gdx.input.setInputProcessor(new InputAdapter() {
-            @Override
-            public boolean touchDown(final int screenX, final int screenY, final int pointer, final int button) {
-                final Cell cell = getTileCellAt(screenX, screenY);
-                cell.setRotation((cell.getRotation() + 1) % 4);
-
-                return false;
-            }
-        });
     }
 
     @Override
     public void render(final float delta) {
-        final Predicate<Cell> predicate = new Predicate<Cell>() {
-            @Override
-            public boolean evaluate(final Cell arg0) {
-                return isCellFloor(arg0);
-            }
-        };
+
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         Gdx.gl.glClearColor(1, 0, 0, 1);
@@ -96,7 +86,7 @@ public class GameScreen extends ScreenAdapter {
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || rectanglePressed(this.leftButton)) {
             final Array<Cell> cell = getTilesToTheLeft(this.moon, motion);
 
-            if (!cell.select(predicate).iterator().hasNext()) {
+            if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
                 if (cannotPanLeft || cannotPanRight && this.moon.getX() > 250) {
                     if (this.moon.getX() - motion > 0) {
                         this.moon.translateX(-motion);
@@ -112,7 +102,7 @@ public class GameScreen extends ScreenAdapter {
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || rectanglePressed(this.rightButton)) {
             final Array<Cell> cell = getTilesToTheRight(this.moon, motion);
 
-            if (!cell.select(predicate).iterator().hasNext()) {
+            if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
                 if (cannotPanRight || cannotPanLeft && this.moon.getX() < 250) {
                     if (this.moon.getX() + motion < this.tiledMapRenderer.getViewBounds().width - this.moon.getWidth()) {
                         this.moon.translateX(motion);
@@ -134,7 +124,7 @@ public class GameScreen extends ScreenAdapter {
 
             if (cell.contains(null, true)) {
                 this.moon.setPosition(10, 64); // lose
-            } else if (!cell.select(predicate).iterator().hasNext()) {
+            } else if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
                 this.moon.translateY(-motion);
             }
         }
@@ -158,16 +148,13 @@ public class GameScreen extends ScreenAdapter {
     private Cell getTileCellAt(final float screenX, final float screenY) {
         final Vector3 coords = this.camera.unproject(new Vector3(screenX, screenY, 0));
 
-        final int tilewidth = this.tiledMapRenderer.getMap()
-                                .getProperties().get("tilewidth", Integer.class);
-        final int tileHeight = this.tiledMapRenderer.getMap()
-                                .getProperties().get("tileheight", Integer.class);
+        final int tilewidth = this.tiledMapRenderer.getMap().getProperties().get("tilewidth", Integer.class);
+        final int tileHeight = this.tiledMapRenderer.getMap().getProperties().get("tileheight", Integer.class);
 
         final int x = (int) Math.floor(coords.x / (tilewidth * this.scale));
         final int y = (int) Math.floor(coords.y / (tileHeight * this.scale));
 
-        final TiledMapTileLayer ml = (TiledMapTileLayer) this.tiledMapRenderer.getMap()
-                                                                        .getLayers().get(0);
+        final TiledMapTileLayer ml = (TiledMapTileLayer) this.tiledMapRenderer.getMap().getLayers().get(0);
         return ml.getCell(x, y);
     }
 
@@ -216,7 +203,6 @@ public class GameScreen extends ScreenAdapter {
         final String mapInfo = String.format("Map: total width: %f; w,h: %f, %f; x,y: %f, %f", getMapWidth(), this.tiledMapRenderer.getViewBounds().width, this.tiledMapRenderer.getViewBounds().height, this.tiledMapRenderer.getViewBounds().x, this.tiledMapRenderer.getViewBounds().y);
         final String mouseInfo = String.format("Mouse: %d, %d", Gdx.input.getX(), Gdx.input.getY());
 
-
         this.font.draw(this.sb, String.format("%s%n%s%n%s", spriteInfo, mapInfo, mouseInfo), 10, 470);
     }
 
@@ -231,5 +217,7 @@ public class GameScreen extends ScreenAdapter {
     public void dispose() {
         this.sb.dispose();
         this.tiledMapRenderer.dispose();
+        this.font.dispose();
+        this.game.dispose();
     }
 }
