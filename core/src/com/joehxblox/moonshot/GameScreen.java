@@ -28,7 +28,7 @@ public class GameScreen extends ScreenAdapter {
     private final SpriteBatch sb = new SpriteBatch();
 
     private final OrthogonalTiledMapRenderer tiledMapRenderer;
-    private final Sprite moon;
+    private final Moon moon;
 
     private final Rectangle leftButton;
     private final Rectangle centerButton;
@@ -61,9 +61,7 @@ public class GameScreen extends ScreenAdapter {
 
         this.tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap, this.scale);
 
-        this.moon = new Sprite(new Texture(Gdx.files.internal("moon.png")));
-        this.moon.translateY(64.01f);
-        this.moon.translateX(10);
+        this.moon = new Moon();
 
         final float buttonWidth = w * 0.25f;
         this.leftButton = new Rectangle(0, 0, buttonWidth, h);
@@ -73,19 +71,19 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void render(final float delta) {
-        if (!gameOver) {
-            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-            Gdx.gl.glClearColor(1, 0, 0, 1);
-            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClearColor(1, 0, 0, 1);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        if (!gameOver) {
             final float motion = 200 * delta;
 
             final boolean cannotPanRight = this.tiledMapRenderer.getViewBounds().x + motion > getMapWidth() - this.tiledMapRenderer.getViewBounds().width;
             final boolean cannotPanLeft = this.tiledMapRenderer.getViewBounds().x - motion < 0;
 
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || rectanglePressed(this.leftButton)) {
-                final Array<Cell> cell = getTilesToTheLeft(this.moon, motion);
+                final Array<Cell> cell = getTilesToTheLeft(this.moon.getSprite(), motion);
 
                 if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
                     if (cannotPanLeft || cannotPanRight && this.moon.getX() > 250) {
@@ -101,7 +99,7 @@ public class GameScreen extends ScreenAdapter {
             }
 
             if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || rectanglePressed(this.rightButton)) {
-                final Array<Cell> cell = getTilesToTheRight(this.moon, motion);
+                final Array<Cell> cell = getTilesToTheRight(this.moon.getSprite(), motion);
 
                 if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
                     if (cannotPanRight || cannotPanLeft && this.moon.getX() < 250) {
@@ -121,20 +119,20 @@ public class GameScreen extends ScreenAdapter {
                     this.moon.translateY(motion);
                 }
             } else {
-                final Array<Cell> cell = getTilesBeneath(this.moon, motion);
+                final Array<Cell> cell = getTilesBeneath(this.moon.getSprite(), motion);
 
-                if (cell.contains(null, true)) {
+                if (this.moon.getY() + this.moon.getHeight() < 0) {
                     gameOver = true;
-                } else if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
+                } if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
                     this.moon.translateY(-motion);
                 }
             }
-
-            this.camera.update();
-
-            this.tiledMapRenderer.setView(this.camera);
-            this.tiledMapRenderer.render();
         }
+
+        this.camera.update();
+
+        this.tiledMapRenderer.setView(this.camera);
+        this.tiledMapRenderer.render();
 
         this.sb.begin();
 
@@ -160,7 +158,7 @@ public class GameScreen extends ScreenAdapter {
         final int x = (int) Math.floor(coords.x / (tilewidth * this.scale));
         final int y = (int) Math.floor(coords.y / (tileHeight * this.scale));
 
-        final TiledMapTileLayer ml = (TiledMapTileLayer) this.tiledMapRenderer.getMap().getLayers().get(0);
+        final TiledMapTileLayer ml = (TiledMapTileLayer) this.tiledMapRenderer.getMap().getLayers().get("ground");
         return ml.getCell(x, y);
     }
 
