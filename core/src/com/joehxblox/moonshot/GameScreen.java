@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.MapLayers;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -92,6 +94,8 @@ public class GameScreen extends ScreenAdapter {
                         }
                     } else {
                         this.camera.translate(-motion, 0);
+                        MapLayer background = this.tiledMapRenderer.getMap().getLayers().get("background");
+                        background.setOffsetX(background.getOffsetX() - motion);
                     }
                 }
 
@@ -108,6 +112,8 @@ public class GameScreen extends ScreenAdapter {
                         }
                     } else {
                         this.camera.translate(motion, 0);
+                        MapLayer background = this.tiledMapRenderer.getMap().getLayers().get("background");
+                        background.setOffsetX(background.getOffsetX() + motion);
                     }
                 }
 
