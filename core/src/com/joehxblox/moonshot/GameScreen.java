@@ -36,6 +36,8 @@ public class GameScreen extends ScreenAdapter {
 
     private final float scale;
 
+    private boolean gameOver = false;
+
     private final Predicate<Cell> cellFloorPredicate = new Predicate<Cell>() {
         @Override
         public boolean evaluate(final Cell arg0) {
@@ -71,70 +73,74 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void render(final float delta) {
+        if (!gameOver) {
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            Gdx.gl.glClearColor(1, 0, 0, 1);
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+            final float motion = 200 * delta;
 
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        Gdx.gl.glClearColor(1, 0, 0, 1);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            final boolean cannotPanRight = this.tiledMapRenderer.getViewBounds().x + motion > getMapWidth() - this.tiledMapRenderer.getViewBounds().width;
+            final boolean cannotPanLeft = this.tiledMapRenderer.getViewBounds().x - motion < 0;
 
-        final float motion = 200 * delta;
+            if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || rectanglePressed(this.leftButton)) {
+                final Array<Cell> cell = getTilesToTheLeft(this.moon, motion);
 
-        final boolean cannotPanRight = this.tiledMapRenderer.getViewBounds().x + motion > getMapWidth() - this.tiledMapRenderer.getViewBounds().width;
-        final boolean cannotPanLeft = this.tiledMapRenderer.getViewBounds().x - motion < 0;
-
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || rectanglePressed(this.leftButton)) {
-            final Array<Cell> cell = getTilesToTheLeft(this.moon, motion);
-
-            if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
-                if (cannotPanLeft || cannotPanRight && this.moon.getX() > 250) {
-                    if (this.moon.getX() - motion > 0) {
-                        this.moon.translateX(-motion);
+                if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
+                    if (cannotPanLeft || cannotPanRight && this.moon.getX() > 250) {
+                        if (this.moon.getX() - motion > 0) {
+                            this.moon.translateX(-motion);
+                        }
+                    } else {
+                        this.camera.translate(-motion, 0);
                     }
-                } else {
-                    this.camera.translate(-motion, 0);
+                }
+
+                this.moon.rotate(motion);
+            }
+
+            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || rectanglePressed(this.rightButton)) {
+                final Array<Cell> cell = getTilesToTheRight(this.moon, motion);
+
+                if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
+                    if (cannotPanRight || cannotPanLeft && this.moon.getX() < 250) {
+                        if (this.moon.getX() + motion < this.tiledMapRenderer.getViewBounds().width - this.moon.getWidth()) {
+                            this.moon.translateX(motion);
+                        }
+                    } else {
+                        this.camera.translate(motion, 0);
+                    }
+                }
+
+                this.moon.rotate(-motion);
+            }
+
+            if (Gdx.input.isKeyPressed(Input.Keys.UP) || rectanglePressed(this.centerButton)) {
+                if (this.moon.getY() + this.moon.getHeight() + motion < Gdx.graphics.getHeight()) {
+                    this.moon.translateY(motion);
+                }
+            } else {
+                final Array<Cell> cell = getTilesBeneath(this.moon, motion);
+
+                if (cell.contains(null, true)) {
+                    gameOver = true;
+                } else if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
+                    this.moon.translateY(-motion);
                 }
             }
 
-            this.moon.rotate(motion);
+            this.camera.update();
+
+            this.tiledMapRenderer.setView(this.camera);
+            this.tiledMapRenderer.render();
         }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || rectanglePressed(this.rightButton)) {
-            final Array<Cell> cell = getTilesToTheRight(this.moon, motion);
-
-            if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
-                if (cannotPanRight || cannotPanLeft && this.moon.getX() < 250) {
-                    if (this.moon.getX() + motion < this.tiledMapRenderer.getViewBounds().width - this.moon.getWidth()) {
-                        this.moon.translateX(motion);
-                    }
-                } else {
-                    this.camera.translate(motion, 0);
-                }
-            }
-
-            this.moon.rotate(-motion);
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.UP) || rectanglePressed(this.centerButton)) {
-            if (this.moon.getY() + this.moon.getHeight() + motion < Gdx.graphics.getHeight()) {
-                this.moon.translateY(motion);
-            }
-        } else {
-            final Array<Cell> cell = getTilesBeneath(this.moon, motion);
-
-            if (cell.contains(null, true)) {
-                this.moon.setPosition(10, 64); // lose
-            } else if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
-                this.moon.translateY(-motion);
-            }
-        }
-
-        this.camera.update();
-
-        this.tiledMapRenderer.setView(this.camera);
-        this.tiledMapRenderer.render();
 
         this.sb.begin();
+
+        if (gameOver) {
+            this.font.draw(this.sb, "Game Over", Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 2);
+        }
 
         printDebug();
         this.moon.draw(this.sb);
@@ -160,22 +166,22 @@ public class GameScreen extends ScreenAdapter {
 
     private Array<Cell> getTilesToTheRight(final Sprite sprite, final float motion) {
 
-        final Array<Cell> cells = new Array<>();
-
         final float x = sprite.getX() + sprite.getWidth() + motion;
-        final float y = Gdx.graphics.getHeight() - sprite.getY();
 
-        cells.add(getTileCellAt(x, y), getTileCellAt(x, y - sprite.getHeight() / 2), getTileCellAt(x, y - sprite.getHeight()));
-
-        return cells;
+        return getTilesToTheSide(sprite, x);
     }
 
     private Array<Cell> getTilesToTheLeft(final Sprite sprite, final float motion) {
 
-        final Array<Cell> cells = new Array<>();
-
         final float x = sprite.getX() - motion;
+
+        return getTilesToTheSide(sprite, x);
+    }
+
+    private Array<Cell> getTilesToTheSide(final Sprite sprite, float x) {
         final float y = Gdx.graphics.getHeight() - sprite.getY();
+
+        final Array<Cell> cells = new Array<>();
 
         cells.add(getTileCellAt(x, y), getTileCellAt(x, y - sprite.getHeight() / 2), getTileCellAt(x, y - sprite.getHeight()));
 
@@ -183,11 +189,21 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private Array<Cell> getTilesBeneath(final Sprite sprite, final float motion) {
+        final float y = Gdx.graphics.getHeight() - sprite.getY() + motion;
+
+        return getTilesAboveOrBeneath(sprite, y);
+    }
+
+    private Array<Cell> getTilesAbove(final Sprite sprite, final float motion) {
+        final float y = Gdx.graphics.getHeight() - sprite.getY() - sprite.getHeight() + motion;
+
+        return getTilesAboveOrBeneath(sprite, y);
+    }
+
+    private Array<Cell> getTilesAboveOrBeneath(final Sprite sprite, final float y) {
+        final float x = sprite.getX();
 
         final Array<Cell> cells = new Array<>();
-
-        final float x = sprite.getX();
-        final float y = Gdx.graphics.getHeight() - sprite.getY() + motion;
 
         cells.add(getTileCellAt(x, y), getTileCellAt(x + sprite.getWidth() / 2, y), getTileCellAt(x + sprite.getWidth(), y));
 
