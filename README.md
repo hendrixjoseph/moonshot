@@ -12,3 +12,4 @@
 ## assets used
 
 * [/blob/master/android/assets/space-background.png](/blob/master/android/assets/space-background.png) : https://opengameart.org/content/space-cartoony-tiled-texture
+* [/blob/master/android/assets/meteor1.png](/blob/master/android/assets/meteor1.png) : https://opengameart.org/content/meteor-animated-64x64

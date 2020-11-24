@@ -18,6 +18,10 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Predicate;
 import com.badlogic.gdx.utils.TimeUtils;
+import com.joehxblox.moonshot.sprite.GameSprite;
+import com.joehxblox.moonshot.sprite.Meteor;
+import com.joehxblox.moonshot.sprite.Moon;
+import com.joehxblox.moonshot.sprite.Star;
 
 import static com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 
@@ -35,13 +39,14 @@ public class GameScreen extends ScreenAdapter {
     private final Rectangle centerButton;
     private final Rectangle rightButton;
 
-    private final Array<Star> stars = new Array<>();
+    private final Array<GameSprite> npcs = new Array<>();
 
     private final float scale;
 
     private boolean gameOver = false;
     private long lastStar = TimeUtils.nanoTime();
-    private int dropsGathered = 0;
+    private long lastMeteor = TimeUtils.nanoTime();
+    private final int dropsGathered = 0;
 
     private final Predicate<Cell> cellFloorPredicate = new Predicate<Cell>() {
         @Override
@@ -98,8 +103,8 @@ public class GameScreen extends ScreenAdapter {
 
         this.moon.draw(this.sb);
 
-        for (final Star star : this.stars) {
-            star.draw(this.sb);
+        for (final GameSprite npc : this.npcs) {
+            npc.draw(this.sb);
         }
 
         this.sb.end();
@@ -159,30 +164,35 @@ public class GameScreen extends ScreenAdapter {
         }
 
         if (TimeUtils.nanoTime() - this.lastStar > 1000000000) {
-            stars.add(new Star());
+            this.npcs.add(new Star());
             this.lastStar = TimeUtils.nanoTime();
         }
 
-        for (final Star star : this.stars) {
-            star.translateY(-motion);
+        if (TimeUtils.nanoTime() - this.lastMeteor > 1000000000) {
+            this.npcs.add(new Meteor());
+            this.lastMeteor = TimeUtils.nanoTime();
+        }
 
-            if (star.isOffScreen()) {
-                this.stars.removeValue(star, true);
+        for (final GameSprite npc : this.npcs) {
+            npc.translateY(-motion);
+
+            if (npc.isOffScreen()) {
+                this.npcs.removeValue(npc, true);
             }
 
-            if (moon.overlaps(star.getRectangle())) {
-                this.stars.removeValue(star, true);
+            if (this.moon.overlaps(npc.getRectangle())) {
+                this.npcs.removeValue(npc, true);
             }
         }
     }
 
-    private void panCameraRight(float motion) {
+    private void panCameraRight(final float motion) {
         this.camera.translate(motion, 0);
         final MapLayer background = this.tiledMapRenderer.getMap().getLayers().get("background");
         background.setOffsetX(background.getOffsetX() + motion);
 
-        for (final Star star : this.stars) {
-            star.translateX(-motion);
+        for (final GameSprite npc : this.npcs) {
+            npc.translateX(-motion);
         }
     }
 
