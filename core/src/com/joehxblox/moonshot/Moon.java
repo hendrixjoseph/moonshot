@@ -8,24 +8,24 @@ import com.badlogic.gdx.math.Circle;
 
 public class Moon {
     private final Sprite sprite;
-    private final Circle cicle;
+    private final Circle circle;
 
     public Moon() {
         this.sprite = new Sprite(new Texture(Gdx.files.internal("moon.png")));
         this.sprite.translateY(64.01f);
         this.sprite.translateX(10);
 
-        this.cicle = new Circle(this.sprite.getX(), this.sprite.getY(), this.sprite.getHeight());
+        this.circle = new Circle(this.sprite.getX(), this.sprite.getY(), this.sprite.getHeight());
     }
 
     public void translateX(float xAmount) {
         sprite.translateX(xAmount);
-        this.cicle.x += xAmount;
+        this.circle.x += xAmount;
     }
 
     public void translateY(float yAmount) {
         sprite.translateY(yAmount);
-        this.cicle.y += yAmount;
+        this.circle.y += yAmount;
     }
 
     public float getX() {
