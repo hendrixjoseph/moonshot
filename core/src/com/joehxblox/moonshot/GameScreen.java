@@ -169,6 +169,10 @@ public class GameScreen extends ScreenAdapter {
             if (star.isOffScreen()) {
                 this.stars.removeValue(star, true);
             }
+
+            if (moon.overlaps(star.getRectangle())) {
+                this.stars.removeValue(star, true);
+            }
         }
     }
 

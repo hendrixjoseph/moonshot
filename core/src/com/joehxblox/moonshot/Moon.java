@@ -5,6 +5,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.Rectangle;
 
 public class Moon {
     private final Sprite sprite;
@@ -15,7 +17,10 @@ public class Moon {
         this.sprite.translateY(64.01f);
         this.sprite.translateX(10);
 
-        this.circle = new Circle(this.sprite.getX(), this.sprite.getY(), this.sprite.getHeight());
+        float radius = this.sprite.getHeight() / 2;
+
+        this.circle = new Circle(this.sprite.getX() + radius, this.sprite.getY() + radius, radius);
+
     }
 
     public void translateX(float xAmount) {
@@ -54,5 +59,9 @@ public class Moon {
 
     public Sprite getSprite() {
         return sprite;
+    }
+
+    public boolean overlaps(Rectangle rectangle) {
+        return Intersector.overlaps(circle, rectangle);
     }
 }
