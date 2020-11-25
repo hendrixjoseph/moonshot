@@ -6,6 +6,7 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.MapLayer;
@@ -13,6 +14,7 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -43,10 +45,12 @@ public class GameScreen extends ScreenAdapter {
 
     private final float scale;
 
+    private final Vector3 cameraStartPosition;
+
     private boolean gameOver = false;
     private long lastStar = TimeUtils.nanoTime();
     private long lastMeteor = TimeUtils.nanoTime();
-    private final int dropsGathered = 0;
+    private int score = 0;
 
     private final Predicate<Cell> cellFloorPredicate = new Predicate<Cell>() {
         @Override
@@ -63,6 +67,9 @@ public class GameScreen extends ScreenAdapter {
 
         this.camera.setToOrtho(false, w, h);
         this.camera.update();
+        this.cameraStartPosition = new Vector3(this.camera.position);
+
+
         final TiledMap tiledMap = new TmxMapLoader().load("moonshot.tmx");
 
         final int mapHeight = tiledMap.getProperties().get("height", Integer.class);
@@ -86,7 +93,19 @@ public class GameScreen extends ScreenAdapter {
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        if (!this.gameOver) {
+        if (this.gameOver) {
+            if (Gdx.input.isTouched()) {
+                this.npcs.clear();
+                this.camera.position.set(cameraStartPosition);
+                this.moon.reset();
+
+                final MapLayer background = this.tiledMapRenderer.getMap().getLayers().get("background");
+                background.setOffsetX(0);
+
+                this.gameOver = false;
+                this.score = 0;
+            }
+        } else {
             playGame(delta);
         }
 
@@ -105,6 +124,26 @@ public class GameScreen extends ScreenAdapter {
 
         for (final GameSprite npc : this.npcs) {
             npc.draw(this.sb);
+        }
+
+        this.font.draw(this.sb, String.format("Score: %d", score), 10, 470);
+
+        String message = "";
+
+        if (score < 2) {
+            message = "Collect the stars!";
+        } else if (score == 10) {
+            message = "Avoid the meteors!";
+        }
+
+        if (!message.isEmpty()) {
+            int w = Gdx.graphics.getWidth();
+            int h = Gdx.graphics.getHeight();
+
+            GlyphLayout glyph = new GlyphLayout();
+            glyph.setText(this.font, message);
+
+            this.font.draw(this.sb, message, (w - glyph.width) / 2, (h + glyph.height) / 2);
         }
 
         this.sb.end();
@@ -168,8 +207,8 @@ public class GameScreen extends ScreenAdapter {
             this.lastStar = TimeUtils.nanoTime();
         }
 
-        if (TimeUtils.nanoTime() - this.lastMeteor > 1000000000) {
-            this.npcs.add(new Meteor());
+        if (this.score > 9 && TimeUtils.nanoTime() - this.lastMeteor > 1000000000) {
+            this.npcs.add(new Meteor(1f - 2f / (score - 8f)));
             this.lastMeteor = TimeUtils.nanoTime();
         }
 
@@ -181,7 +220,13 @@ public class GameScreen extends ScreenAdapter {
             }
 
             if (this.moon.overlaps(npc.getRectangle())) {
-                this.npcs.removeValue(npc, true);
+                if (npc instanceof Star) {
+                    Star star = (Star) npc;
+                    this.npcs.removeValue(npc, true);
+                    this.score += star.getPoints();
+                } else if (npc instanceof Meteor) {
+                    this.gameOver = true;
+                }
             }
         }
     }

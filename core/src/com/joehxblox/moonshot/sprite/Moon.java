@@ -8,18 +8,14 @@ import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Moon extends GameSprite {
-    private final Circle circle;
+    private final Circle circle = new Circle();
 
     public Moon() {
         super(new Sprite(new Texture(Gdx.files.internal("moon.png"))));
 
-        this.getSprite().translateY(64.01f);
-        this.getSprite().translateX(10);
+        this.circle.setRadius(getRadius());
 
-        final float radius = this.getSprite().getHeight() / 2;
-
-        this.circle = new Circle(this.getSprite().getX() + radius, this.getSprite().getY() + radius, radius);
-
+        this.reset();
     }
 
     @Override
@@ -56,5 +52,16 @@ public class Moon extends GameSprite {
 
     public boolean overlaps(final Rectangle rectangle) {
         return Intersector.overlaps(this.circle, rectangle);
+    }
+
+    public void reset() {
+        final float radius = getRadius();
+
+        this.getSprite().setPosition(10, 64.01f);
+        this.circle.setPosition(this.getSprite().getX() + radius, this.getSprite().getY() + radius);
+    }
+
+    private float getRadius() {
+        return this.getSprite().getHeight() / 2;
     }
 }
