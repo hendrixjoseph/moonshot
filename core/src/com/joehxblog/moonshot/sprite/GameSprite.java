@@ -1,4 +1,4 @@
-package com.joehxblox.moonshot.sprite;
+package com.joehxblog.moonshot.sprite;
 
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;

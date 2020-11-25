@@ -1,4 +1,4 @@
-package com.joehxblox.moonshot;
+package com.joehxblog.moonshot;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -14,16 +14,15 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Predicate;
 import com.badlogic.gdx.utils.TimeUtils;
-import com.joehxblox.moonshot.sprite.GameSprite;
-import com.joehxblox.moonshot.sprite.Meteor;
-import com.joehxblox.moonshot.sprite.Moon;
-import com.joehxblox.moonshot.sprite.Star;
+import com.joehxblog.moonshot.sprite.GameSprite;
+import com.joehxblog.moonshot.sprite.Meteor;
+import com.joehxblog.moonshot.sprite.Moon;
+import com.joehxblog.moonshot.sprite.Star;
 
 import static com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 
@@ -35,13 +34,13 @@ public class GameScreen extends ScreenAdapter {
     private final SpriteBatch sb = new SpriteBatch();
 
     private final OrthogonalTiledMapRenderer tiledMapRenderer;
-    private final Moon moon;
+    private final com.joehxblog.moonshot.sprite.Moon moon;
 
     private final Rectangle leftButton;
     private final Rectangle centerButton;
     private final Rectangle rightButton;
 
-    private final Array<GameSprite> npcs = new Array<>();
+    private final Array<com.joehxblog.moonshot.sprite.GameSprite> npcs = new Array<>();
 
     private final float scale;
 
@@ -122,7 +121,7 @@ public class GameScreen extends ScreenAdapter {
 
         this.moon.draw(this.sb);
 
-        for (final GameSprite npc : this.npcs) {
+        for (final com.joehxblog.moonshot.sprite.GameSprite npc : this.npcs) {
             npc.draw(this.sb);
         }
 
@@ -208,11 +207,11 @@ public class GameScreen extends ScreenAdapter {
         }
 
         if (this.score > 9 && TimeUtils.nanoTime() - this.lastMeteor > 1000000000) {
-            this.npcs.add(new Meteor(1f - 2f / (score - 8f)));
+            this.npcs.add(new com.joehxblog.moonshot.sprite.Meteor(1f - 2f / (score - 8f)));
             this.lastMeteor = TimeUtils.nanoTime();
         }
 
-        for (final GameSprite npc : this.npcs) {
+        for (final com.joehxblog.moonshot.sprite.GameSprite npc : this.npcs) {
             npc.translateY(-motion);
 
             if (npc.isOffScreen()) {

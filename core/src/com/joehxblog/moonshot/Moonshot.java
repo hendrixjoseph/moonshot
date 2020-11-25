@@ -1,4 +1,4 @@
-package com.joehxblox.moonshot;
+package com.joehxblog.moonshot;
 
 import com.badlogic.gdx.Game;
 

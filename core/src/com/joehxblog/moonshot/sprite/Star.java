@@ -1,12 +1,10 @@
-package com.joehxblox.moonshot.sprite;
+package com.joehxblog.moonshot.sprite;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.ArrayMap;
 
 public class Star extends GameSprite {
     private static final Texture STAR_IMAGE = new Texture(Gdx.files.internal("star.png"));
