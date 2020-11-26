@@ -19,14 +19,14 @@ public class Star extends GameSprite {
         final float h = Gdx.graphics.getHeight();
 
 
-        color = MathUtils.floor(MathUtils.randomTriangular(0, COLORS.length, 0));;
+        this.color = MathUtils.floor(MathUtils.randomTriangular(0, COLORS.length, 0));
 
-        this.getSprite().setColor(COLORS[color]);
+        this.getSprite().setColor(COLORS[this.color]);
         this.getSprite().setRotation(MathUtils.random(360));
         this.getSprite().setPosition(MathUtils.random(w - this.getSprite().getWidth()), h);
     }
 
     public int getPoints() {
-        return color * 2 + 1;
+        return this.color * 2 + 1;
     }
 }

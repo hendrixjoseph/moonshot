@@ -95,7 +95,7 @@ public class GameScreen extends ScreenAdapter {
         if (this.gameOver) {
             if (Gdx.input.isTouched()) {
                 this.npcs.clear();
-                this.camera.position.set(cameraStartPosition);
+                this.camera.position.set(this.cameraStartPosition);
                 this.moon.reset();
 
                 final MapLayer background = this.tiledMapRenderer.getMap().getLayers().get("background");
@@ -125,21 +125,21 @@ public class GameScreen extends ScreenAdapter {
             npc.draw(this.sb);
         }
 
-        this.font.draw(this.sb, String.format("Score: %d", score), 10, 470);
+        this.font.draw(this.sb, String.format("Score: %d", this.score), 10, 470);
 
         String message = "";
 
-        if (score < 2) {
+        if (this.score < 2) {
             message = "Collect the stars!";
-        } else if (score == 10) {
+        } else if (this.score == 10) {
             message = "Avoid the meteors!";
         }
 
         if (!message.isEmpty()) {
-            int w = Gdx.graphics.getWidth();
-            int h = Gdx.graphics.getHeight();
+            final int w = Gdx.graphics.getWidth();
+            final int h = Gdx.graphics.getHeight();
 
-            GlyphLayout glyph = new GlyphLayout();
+            final GlyphLayout glyph = new GlyphLayout();
             glyph.setText(this.font, message);
 
             this.font.draw(this.sb, message, (w - glyph.width) / 2, (h + glyph.height) / 2);
@@ -206,8 +206,8 @@ public class GameScreen extends ScreenAdapter {
             this.lastStar = TimeUtils.nanoTime();
         }
 
-        if (this.score > 9 && TimeUtils.nanoTime() - this.lastMeteor > 1000000000) {
-            this.npcs.add(new com.joehxblog.moonshot.sprite.Meteor(1f - 2f / (score - 8f)));
+        if (/*this.score > 9 &&*/ TimeUtils.nanoTime() - this.lastMeteor > 1000000000) {
+            this.npcs.add(new com.joehxblog.moonshot.sprite.Meteor(1f - 2f / (this.score - 8f)));
             this.lastMeteor = TimeUtils.nanoTime();
         }
 
@@ -220,7 +220,7 @@ public class GameScreen extends ScreenAdapter {
 
             if (this.moon.overlaps(npc.getRectangle())) {
                 if (npc instanceof Star) {
-                    Star star = (Star) npc;
+                    final Star star = (Star) npc;
                     this.npcs.removeValue(npc, true);
                     this.score += star.getPoints();
                 } else if (npc instanceof Meteor) {

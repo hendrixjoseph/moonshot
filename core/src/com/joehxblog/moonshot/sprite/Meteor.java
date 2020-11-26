@@ -10,32 +10,32 @@ import com.badlogic.gdx.math.MathUtils;
 
 public class Meteor extends GameSprite {
 
-    private static final Animation<TextureRegion> walkAnimation = create();
+    private static final Animation<TextureRegion> METEOR_ANIMATION = create();
 
     private float stateTime = 0f;
 
     private static Animation<TextureRegion> create() {
-        Texture walkSheet = new Texture(Gdx.files.internal("meteor.png"));
+        final Texture walkSheet = new Texture(Gdx.files.internal("meteor.png"));
 
-        TextureRegion[][] tmp = TextureRegion.split(walkSheet,16, 32);
+        final TextureRegion[][] tmp = TextureRegion.split(walkSheet, 16, 32);
 
-        return new Animation<>(0.025f, tmp[0]);
+        return new Animation<>(0.125f, tmp[0]);
     }
 
-    public Meteor(float rotationMultiplier) {
-        super(new Sprite(walkAnimation.getKeyFrame(0f, true)));
+    public Meteor(final float rotationMultiplier) {
+        super(new Sprite(METEOR_ANIMATION.getKeyFrame(0f, true)));
 
         final float w = Gdx.graphics.getWidth();
         final float h = Gdx.graphics.getHeight();
 
-        float rotation = rotationMultiplier * 45f;
+        final float rotation = rotationMultiplier * 45f;
 
-        this.getSprite().setRotation(MathUtils.random(-rotation,rotation));
+        this.getSprite().setRotation(MathUtils.random(-rotation, rotation));
         this.getSprite().setPosition(MathUtils.random(w - this.getSprite().getWidth()), h);
     }
 
     @Override
-    public void translateY(float motion) {
+    public void translateY(final float motion) {
         /*
                         |\
                         | \   motion
@@ -44,17 +44,16 @@ public class Meteor extends GameSprite {
                           sin() = x/motion
          */
 
-        float rotation = this.getSprite().getRotation();
+        final float rotation = this.getSprite().getRotation();
         super.translateY(MathUtils.cosDeg(rotation) * motion);
         super.translateX(-MathUtils.sinDeg(rotation) * motion);
     }
 
     @Override
-    public void draw(Batch batch) {
-        stateTime += Gdx.graphics.getDeltaTime(); // Accumulate elapsed animation time
+    public void draw(final Batch batch) {
+        this.stateTime += Gdx.graphics.getDeltaTime();
 
-        // Get current frame of animation for the current stateTime
-        TextureRegion currentFrame = walkAnimation.getKeyFrame(stateTime, true);
+        final TextureRegion currentFrame = METEOR_ANIMATION.getKeyFrame(this.stateTime, true);
 
         this.getSprite().setRegion(currentFrame);
 
