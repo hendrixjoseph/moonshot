@@ -14,6 +14,7 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -34,27 +35,28 @@ public class GameScreen extends ScreenAdapter {
     private final SpriteBatch sb = new SpriteBatch();
 
     private final OrthogonalTiledMapRenderer tiledMapRenderer;
-    private final com.joehxblog.moonshot.sprite.Moon moon;
+    private final Moon moon;
 
     private final Rectangle leftButton;
     private final Rectangle centerButton;
     private final Rectangle rightButton;
 
-    private final Array<com.joehxblog.moonshot.sprite.GameSprite> npcs = new Array<>();
+    private final Array<GameSprite> npcs = new Array<>();
 
     private final float scale;
 
     private final Vector3 cameraStartPosition;
 
     private boolean gameOver = false;
+    private boolean newGame = true;
     private long lastStar = TimeUtils.nanoTime();
     private long lastMeteor = TimeUtils.nanoTime();
     private int score = 0;
 
     private final Predicate<Cell> cellFloorPredicate = new Predicate<Cell>() {
         @Override
-        public boolean evaluate(final Cell arg0) {
-            return isCellFloor(arg0);
+        public boolean evaluate(final Cell cell) {
+            return isCellFloor(cell);
         }
     };
 
@@ -67,7 +69,6 @@ public class GameScreen extends ScreenAdapter {
         this.camera.setToOrtho(false, w, h);
         this.camera.update();
         this.cameraStartPosition = new Vector3(this.camera.position);
-
 
         final TiledMap tiledMap = new TmxMapLoader().load("moonshot.tmx");
 
@@ -92,14 +93,17 @@ public class GameScreen extends ScreenAdapter {
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        if (this.gameOver) {
+        if (this.newGame) {
+            if (Gdx.input.isTouched()) {
+                this.newGame = false;
+            }
+        } else if (this.gameOver) {
             if (Gdx.input.isTouched()) {
                 this.npcs.clear();
                 this.camera.position.set(this.cameraStartPosition);
                 this.moon.reset();
 
-                final MapLayer background = this.tiledMapRenderer.getMap().getLayers().get("background");
-                background.setOffsetX(0);
+                getBackground().setOffsetX(0);
 
                 this.gameOver = false;
                 this.score = 0;
@@ -115,13 +119,9 @@ public class GameScreen extends ScreenAdapter {
 
         this.sb.begin();
 
-        if (this.gameOver) {
-            this.font.draw(this.sb, "Game Over", Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 2);
-        }
-
         this.moon.draw(this.sb);
 
-        for (final com.joehxblog.moonshot.sprite.GameSprite npc : this.npcs) {
+        for (final GameSprite npc : this.npcs) {
             npc.draw(this.sb);
         }
 
@@ -129,7 +129,11 @@ public class GameScreen extends ScreenAdapter {
 
         String message = "";
 
-        if (this.score < 2) {
+        if (this.newGame) {
+            message = "Tap screen anywhere to start!";
+        } else if (this.gameOver) {
+            message = "Game Over";
+        } else if (this.score < 2) {
             message = "Collect the stars!";
         } else if (this.score == 10) {
             message = "Avoid the meteors!";
@@ -201,17 +205,20 @@ public class GameScreen extends ScreenAdapter {
             }
         }
 
-        if (TimeUtils.nanoTime() - this.lastStar > 1000000000) {
+        if (TimeUtils.nanoTime() - this.lastStar > 1_000_000_000) {
             this.npcs.add(new Star());
             this.lastStar = TimeUtils.nanoTime();
         }
 
-        if (/*this.score > 9 &&*/ TimeUtils.nanoTime() - this.lastMeteor > 1000000000) {
-            this.npcs.add(new com.joehxblog.moonshot.sprite.Meteor(1f - 2f / (this.score - 8f)));
+        if (this.score > 9 && TimeUtils.nanoTime() - this.lastMeteor > 1_000_000_000 / (this.score / 2 - 4)) {
+            final float rotationMultiplier = 1f - 2f / (this.score - 8f);
+            final float speedMultiplier = this.score < 20 ? 1f : MathUtils.lerp(1f, 5f, 1f - 20f / this.score);
+
+            this.npcs.add(new Meteor(rotationMultiplier, speedMultiplier));
             this.lastMeteor = TimeUtils.nanoTime();
         }
 
-        for (final com.joehxblog.moonshot.sprite.GameSprite npc : this.npcs) {
+        for (final GameSprite npc : this.npcs) {
             npc.translateY(-motion);
 
             if (npc.isOffScreen()) {
@@ -230,9 +237,13 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
+    private MapLayer getBackground() {
+        return this.tiledMapRenderer.getMap().getLayers().get("background");
+    }
+
     private void panCameraRight(final float motion) {
         this.camera.translate(motion, 0);
-        final MapLayer background = this.tiledMapRenderer.getMap().getLayers().get("background");
+        final MapLayer background = getBackground();
         background.setOffsetX(background.getOffsetX() + motion);
 
         for (final GameSprite npc : this.npcs) {

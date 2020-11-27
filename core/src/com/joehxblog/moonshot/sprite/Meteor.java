@@ -13,6 +13,7 @@ public class Meteor extends GameSprite {
     private static final Animation<TextureRegion> METEOR_ANIMATION = create();
 
     private float stateTime = 0f;
+    private float speedMultiplier;
 
     private static Animation<TextureRegion> create() {
         final Texture walkSheet = new Texture(Gdx.files.internal("meteor.png"));
@@ -22,13 +23,14 @@ public class Meteor extends GameSprite {
         return new Animation<>(0.125f, tmp[0]);
     }
 
-    public Meteor(final float rotationMultiplier) {
+    public Meteor(final float rotationMultiplier, final float speedMultiplier) {
         super(new Sprite(METEOR_ANIMATION.getKeyFrame(0f, true)));
 
         final float w = Gdx.graphics.getWidth();
         final float h = Gdx.graphics.getHeight();
 
         final float rotation = rotationMultiplier * 45f;
+        this.speedMultiplier = MathUtils.random(1, speedMultiplier);
 
         this.getSprite().setRotation(MathUtils.random(-rotation, rotation));
         this.getSprite().setPosition(MathUtils.random(w - this.getSprite().getWidth()), h);
