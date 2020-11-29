@@ -3,8 +3,11 @@ package com.joehxblog.moonshot;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -24,6 +27,8 @@ import com.joehxblog.moonshot.sprite.GameSprite;
 import com.joehxblog.moonshot.sprite.Meteor;
 import com.joehxblog.moonshot.sprite.Moon;
 import com.joehxblog.moonshot.sprite.Star;
+
+import java.util.Locale;
 
 import static com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 
@@ -93,25 +98,11 @@ public class GameScreen extends ScreenAdapter {
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        if (this.newGame) {
-            if (Gdx.input.isTouched()) {
-                this.newGame = false;
-            }
-        } else if (this.gameOver) {
-            if (Gdx.input.isTouched()) {
-                this.npcs.clear();
-                this.camera.position.set(this.cameraStartPosition);
-                this.moon.reset();
+        handleInput(delta);
+        handleDrawing();
+    }
 
-                getBackground().setOffsetX(0);
-
-                this.gameOver = false;
-                this.score = 0;
-            }
-        } else {
-            playGame(delta);
-        }
-
+    private void handleDrawing() {
         this.camera.update();
 
         this.tiledMapRenderer.setView(this.camera);
@@ -126,6 +117,63 @@ public class GameScreen extends ScreenAdapter {
         }
 
         this.font.draw(this.sb, String.format("Score: %d", this.score), 10, 470);
+
+        if (this.newGame || this.gameOver) {
+            final float w = Gdx.graphics.getWidth();
+            final float h = Gdx.graphics.getHeight();
+
+            final Pixmap map = new Pixmap(1, 1, Pixmap.Format.RGBA4444);
+            map.setColor(0, 0, 0, 0.5f);
+            map.fill();
+            final Texture texture = new Texture(map);
+
+            this.sb.draw(texture, 0, 0, w, h);
+
+            float y = Gdx.graphics.getHeight() - 40;
+            float x = 20;
+
+            float starX = 1;
+            y = y - this.font.draw(this.sb, String.format("Each colored star is worth%na different number of points:"), x, y).height - 20;
+            int starColor = 0;
+
+            final Star[] stars = {new Star(starColor++, 0, starX++ * x * 2, y),
+                    new Star(starColor++, 0, starX++ * x * 2, y),
+                    new Star(starColor++, 0, starX++ * x * 2, y),
+                    new Star(starColor++, 0, starX++ * x * 2, y)};
+
+            for (final Star star : stars) {
+                final GlyphLayout points = new GlyphLayout();
+                points.setText(this.font, String.format(Locale.US, ":%d", star.getPoints()));
+
+                star.draw(this.sb);
+
+                final Rectangle starRect = star.getRectangle();
+
+                this.font.draw(this.sb, points, starRect.x + starRect.width + 2, y + points.height);
+            }
+
+            y -= 20;
+
+            y = y - this.font.draw(this.sb, "Avoid meteors!", x, y).height - 20;
+
+            Meteor meteor = new Meteor();
+            meteor.getSprite().setPosition(x, y - meteor.getSprite().getHeight());
+            meteor.draw(sb);
+
+            final String lineSeparator = String.format("%n");
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Copyright 2020 Joseph Hendrix").append(lineSeparator);
+            sb.append("Background star field from https://opengameart.org/content/space-cartoony-tiled-texture").append(lineSeparator);
+            sb.append("Meteors from https://opengameart.org/content/meteor-animated-64x64").append(lineSeparator);
+            sb.append("Tools used:").append(lineSeparator);
+            sb.append("libGDX, Tiled, Android Studio, Inkscape, Paint.net");
+
+            GlyphLayout credits = new GlyphLayout();
+            credits.setText(font, sb.toString());
+
+            this.font.draw(this.sb, credits, x, credits.height + 20);
+
+        }
 
         String message = "";
 
@@ -150,6 +198,27 @@ public class GameScreen extends ScreenAdapter {
         }
 
         this.sb.end();
+    }
+
+    private void handleInput(final float delta) {
+        if (this.newGame) {
+            if (Gdx.input.isTouched() || Gdx.input.isKeyPressed(Input.Keys.ANY_KEY)) {
+                this.newGame = false;
+            }
+        } else if (this.gameOver) {
+            if (Gdx.input.isTouched() || Gdx.input.isKeyPressed(Input.Keys.ANY_KEY)) {
+                this.npcs.clear();
+                this.camera.position.set(this.cameraStartPosition);
+                this.moon.reset();
+
+                getBackground().setOffsetX(0);
+
+                this.gameOver = false;
+                this.score = 0;
+            }
+        } else {
+            playGame(delta);
+        }
     }
 
     private void playGame(final float delta) {

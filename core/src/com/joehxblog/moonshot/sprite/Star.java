@@ -14,16 +14,22 @@ public class Star extends GameSprite {
     private final int color;
 
     public Star() {
+        this(MathUtils.floor(MathUtils.randomTriangular(0, COLORS.length, 0)),
+                MathUtils.random(360),
+                MathUtils.random(Gdx.graphics.getWidth()),
+                Gdx.graphics.getHeight());
+    }
+
+    public Star(int color, float rotation, float x, float y) {
         super(new Sprite(STAR_IMAGE));
         final float w = Gdx.graphics.getWidth();
         final float h = Gdx.graphics.getHeight();
 
-
-        this.color = MathUtils.floor(MathUtils.randomTriangular(0, COLORS.length, 0));
+        this.color = color;
 
         this.getSprite().setColor(COLORS[this.color]);
-        this.getSprite().setRotation(MathUtils.random(360));
-        this.getSprite().setPosition(MathUtils.random(w - this.getSprite().getWidth()), h);
+        this.getSprite().setRotation(rotation);
+        this.getSprite().setPosition(x, y);
     }
 
     public int getPoints() {

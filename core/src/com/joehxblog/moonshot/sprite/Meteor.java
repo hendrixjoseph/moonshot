@@ -23,6 +23,10 @@ public class Meteor extends GameSprite {
         return new Animation<>(0.125f, tmp[0]);
     }
 
+    public Meteor() {
+        this(0, 1);
+    }
+
     public Meteor(final float rotationMultiplier, final float speedMultiplier) {
         super(new Sprite(METEOR_ANIMATION.getKeyFrame(0f, true)));
 
