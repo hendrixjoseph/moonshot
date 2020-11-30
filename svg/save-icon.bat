@@ -1,4 +1,4 @@
-$env:Path += ";C:\Program Files\Inkscape\bin"
+rem $env:Path += ";C:\Program Files\Inkscape\bin"
 
 inkscape --export-filename=../android/res/drawable-hdpi/ic_launcher.png -C --export-width=72 icon.svg
 inkscape --export-filename=../android/res/drawable-mdpi/ic_launcher.png -C --export-width=48 icon.svg
