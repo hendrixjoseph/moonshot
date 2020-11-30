@@ -1,14 +1,20 @@
 package com.joehxblog.moonshot.sprite;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 
 public class GameSprite {
     private final Sprite sprite;
 
-    public GameSprite(final Sprite sprite) {
-        this.sprite = sprite;
+    public GameSprite(final Texture texture) {
+        this.sprite = new Sprite(texture);
+    }
+
+    public GameSprite(final TextureRegion texture) {
+        this.sprite = new Sprite(texture);
     }
 
     public void translateY(final float motion) {

@@ -1,6 +1,8 @@
 package com.joehxblog.moonshot.sprite;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -9,25 +11,30 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 
 public class Meteor extends GameSprite {
+    public static final String FILENAME = "meteor.png";
 
-    private static final Animation<TextureRegion> METEOR_ANIMATION = create();
+    private static Animation<TextureRegion> METEOR_ANIMATION;
 
     private float stateTime = 0f;
 
-    private static Animation<TextureRegion> create() {
-        final Texture walkSheet = new Texture(Gdx.files.internal("meteor.png"));
+    private static Animation<TextureRegion> getMeteorAnimation(AssetManager manager) {
+        if (METEOR_ANIMATION == null || !manager.contains(FILENAME)) {
+            final Texture walkSheet = manager.get(FILENAME, Texture.class);
 
-        final TextureRegion[][] tmp = TextureRegion.split(walkSheet, 16, 32);
+            final TextureRegion[][] tmp = TextureRegion.split(walkSheet, 16, 32);
 
-        return new Animation<>(0.125f, tmp[0]);
+            METEOR_ANIMATION = new Animation<>(0.125f, tmp[0]);
+        }
+
+        return METEOR_ANIMATION;
     }
 
-    public Meteor() {
-        this(0);
+    public Meteor(AssetManager manager) {
+        this(0, manager);
     }
 
-    public Meteor(final float rotationMultiplier) {
-        super(new Sprite(METEOR_ANIMATION.getKeyFrame(0f, true)));
+    public Meteor(final float rotationMultiplier, AssetManager manager) {
+        super(getMeteorAnimation(manager).getKeyFrame(0f, true));
 
         final float w = Gdx.graphics.getWidth();
         final float h = Gdx.graphics.getHeight();

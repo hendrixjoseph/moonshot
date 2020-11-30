@@ -1,6 +1,7 @@
 package com.joehxblog.moonshot.sprite;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Circle;
@@ -8,10 +9,12 @@ import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Moon extends GameSprite {
+    public static final String FILENAME = "moon.png";
+
     private final Circle circle = new Circle();
 
-    public Moon(float scale) {
-        super(new Sprite(new Texture(Gdx.files.internal("moon.png"))));
+    public Moon(float scale, AssetManager manager) {
+        super(manager.get(FILENAME, Texture.class));
 
         this.circle.setRadius(getRadius());
 

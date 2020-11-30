@@ -5,14 +5,17 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
@@ -35,6 +38,8 @@ import static com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 public class GameScreen extends ScreenAdapter {
     private static final String HIGH_SCORE = "highScore";
     private final Moonshot game;
+
+    private final AssetManager manager = new AssetManager();
 
     private final OrthographicCamera camera = new OrthographicCamera();
     private final BitmapFont font = new BitmapFont();
@@ -72,6 +77,10 @@ public class GameScreen extends ScreenAdapter {
     };
 
     public GameScreen(final Moonshot game) {
+        this.manager.load(Moon.FILENAME, Texture.class);
+        this.manager.load(Meteor.FILENAME, Texture.class);
+        this.manager.load(Star.FILENAME, Texture.class);
+
         this.game = game;
         this.prefs = Gdx.app.getPreferences("com.joehxblog.moonshot");
         this.highScore = this.prefs.getInteger(HIGH_SCORE, 0);
@@ -95,7 +104,9 @@ public class GameScreen extends ScreenAdapter {
 
         this.tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap, this.scale);
 
-        this.moon = new Moon(this.scale);
+        manager.finishLoading();
+
+        this.moon = new Moon(this.scale, manager);
 
         final float buttonWidth = w * 0.25f;
         this.leftButton = new Rectangle(0, 0, buttonWidth, h);
@@ -152,7 +163,7 @@ public class GameScreen extends ScreenAdapter {
             y = y - this.glyph.height - this.font.getLineHeight();
 
             for (int starColor = 0; starColor < Star.NUMBER_OF_COLORS; starColor++) {
-                final Star star = new Star(starColor, 0, starX++ * x * 2, y);
+                final Star star = new Star(starColor, 0, starX++ * x * 2, y, manager);
 
                 this.glyph.setText(this.font, String.format(Locale.US, ":%d", star.getPoints()));
 
@@ -169,7 +180,7 @@ public class GameScreen extends ScreenAdapter {
 
             y = y - this.glyph.height - this.font.getLineHeight();
 
-            final Meteor meteor = new Meteor();
+            final Meteor meteor = new Meteor(manager);
             meteor.getSprite().setPosition(x, y);
             meteor.draw(this.sb);
 
@@ -292,14 +303,14 @@ public class GameScreen extends ScreenAdapter {
         }
 
         if (TimeUtils.nanoTime() - this.lastStar > 1_000_000_000) {
-            this.npcs.add(new Star());
+            this.npcs.add(new Star(manager));
             this.lastStar = TimeUtils.nanoTime();
         }
 
         if (this.score > 9 && TimeUtils.nanoTime() - this.lastMeteor > 1_000_000_000 - this.score * 100) {
             final float rotationMultiplier = 1f - 2f / (this.score - 8f);
 
-            this.npcs.add(new Meteor(rotationMultiplier));
+            this.npcs.add(new Meteor(rotationMultiplier, manager));
             this.lastMeteor = TimeUtils.nanoTime();
         }
 
@@ -440,5 +451,6 @@ public class GameScreen extends ScreenAdapter {
         this.tiledMapRenderer.dispose();
         this.font.dispose();
         this.game.dispose();
+        this.manager.dispose();
     }
 }
