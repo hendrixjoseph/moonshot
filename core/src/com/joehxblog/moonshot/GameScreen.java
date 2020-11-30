@@ -39,6 +39,8 @@ public class GameScreen extends ScreenAdapter {
     private final BitmapFont font = new BitmapFont();
     private final SpriteBatch sb = new SpriteBatch();
 
+    private final GlyphLayout glyph = new GlyphLayout();
+
     private final OrthogonalTiledMapRenderer tiledMapRenderer;
     private final Moon moon;
 
@@ -145,14 +147,13 @@ public class GameScreen extends ScreenAdapter {
             for (int starColor = 0; starColor < Star.NUMBER_OF_COLORS; starColor++) {
                 final Star star = new Star(starColor, 0, starX++ * x * 2, y);
 
-                final GlyphLayout points = new GlyphLayout();
-                points.setText(this.font, String.format(Locale.US, ":%d", star.getPoints()));
+                glyph.setText(this.font, String.format(Locale.US, ":%d", star.getPoints()));
 
                 star.draw(this.sb);
 
                 final Rectangle starRect = star.getRectangle();
 
-                this.font.draw(this.sb, points, starRect.x + starRect.width + 2, y + points.height);
+                this.font.draw(this.sb, glyph, starRect.x + starRect.width + 2, y + glyph.height);
             }
 
             y -= 20;
@@ -171,10 +172,9 @@ public class GameScreen extends ScreenAdapter {
             sb.append("Tools used:").append(lineSeparator);
             sb.append("libGDX, Tiled, Android Studio, Inkscape, Paint.net");
 
-            final GlyphLayout credits = new GlyphLayout();
-            credits.setText(this.font, sb.toString());
+            glyph.setText(this.font, sb.toString());
 
-            this.font.draw(this.sb, credits, x, credits.height + 20);
+            this.font.draw(this.sb, glyph, x, glyph.height + 20);
 
         }
 
@@ -194,7 +194,6 @@ public class GameScreen extends ScreenAdapter {
             final int w = Gdx.graphics.getWidth();
             final int h = Gdx.graphics.getHeight();
 
-            final GlyphLayout glyph = new GlyphLayout();
             glyph.setText(this.font, message);
 
             this.font.draw(this.sb, message, (w - glyph.width) / 2, (h + glyph.height) / 2);
