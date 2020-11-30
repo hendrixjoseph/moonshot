@@ -2,8 +2,8 @@ package com.joehxblog.moonshot;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.ScreenAdapter;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -17,7 +17,6 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -33,6 +32,7 @@ import java.util.Locale;
 import static com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 
 public class GameScreen extends ScreenAdapter {
+    private static final String HIGH_SCORE = "highScore";
     private final Moonshot game;
 
     private final OrthographicCamera camera = new OrthographicCamera();
@@ -52,11 +52,14 @@ public class GameScreen extends ScreenAdapter {
 
     private final Vector3 cameraStartPosition;
 
+    private final Preferences prefs;
+
     private boolean gameOver = false;
     private boolean newGame = true;
     private long lastStar = TimeUtils.nanoTime();
     private long lastMeteor = TimeUtils.nanoTime();
     private int score = 0;
+    private int highScore;
 
     private final Predicate<Cell> cellFloorPredicate = new Predicate<Cell>() {
         @Override
@@ -67,6 +70,8 @@ public class GameScreen extends ScreenAdapter {
 
     public GameScreen(final Moonshot game) {
         this.game = game;
+        this.prefs = Gdx.app.getPreferences("com.joehxblog.moonshot");
+        this.highScore = this.prefs.getInteger(HIGH_SCORE, 0);
 
         final float w = Gdx.graphics.getWidth();
         final float h = Gdx.graphics.getHeight();
@@ -83,7 +88,7 @@ public class GameScreen extends ScreenAdapter {
 
         this.tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap, this.scale);
 
-        this.moon = new Moon();
+        this.moon = new Moon(this.scale);
 
         final float buttonWidth = w * 0.25f;
         this.leftButton = new Rectangle(0, 0, buttonWidth, h);
@@ -116,7 +121,9 @@ public class GameScreen extends ScreenAdapter {
             npc.draw(this.sb);
         }
 
-        this.font.draw(this.sb, String.format("Score: %d", this.score), 10, 470);
+        float y = Gdx.graphics.getHeight() - 10;
+        y = y - this.font.draw(this.sb, String.format(Locale.US, "Score: %d", this.score), 10, y).height - 10;
+        y = y - this.font.draw(this.sb, String.format(Locale.US, "High Score: %d", this.highScore), 10, y).height;
 
         if (this.newGame || this.gameOver) {
             final float w = Gdx.graphics.getWidth();
@@ -129,19 +136,15 @@ public class GameScreen extends ScreenAdapter {
 
             this.sb.draw(texture, 0, 0, w, h);
 
-            float y = Gdx.graphics.getHeight() - 40;
-            float x = 20;
+            y -= 10;
+            final float x = 20;
 
             float starX = 1;
             y = y - this.font.draw(this.sb, String.format("Each colored star is worth%na different number of points:"), x, y).height - 20;
-            int starColor = 0;
 
-            final Star[] stars = {new Star(starColor++, 0, starX++ * x * 2, y),
-                    new Star(starColor++, 0, starX++ * x * 2, y),
-                    new Star(starColor++, 0, starX++ * x * 2, y),
-                    new Star(starColor++, 0, starX++ * x * 2, y)};
+            for (int starColor = 0; starColor < Star.NUMBER_OF_COLORS; starColor++) {
+                final Star star = new Star(starColor, 0, starX++ * x * 2, y);
 
-            for (final Star star : stars) {
                 final GlyphLayout points = new GlyphLayout();
                 points.setText(this.font, String.format(Locale.US, ":%d", star.getPoints()));
 
@@ -156,9 +159,9 @@ public class GameScreen extends ScreenAdapter {
 
             y = y - this.font.draw(this.sb, "Avoid meteors!", x, y).height - 20;
 
-            Meteor meteor = new Meteor();
+            final Meteor meteor = new Meteor();
             meteor.getSprite().setPosition(x, y - meteor.getSprite().getHeight());
-            meteor.draw(sb);
+            meteor.draw(this.sb);
 
             final String lineSeparator = String.format("%n");
             final StringBuilder sb = new StringBuilder();
@@ -168,8 +171,8 @@ public class GameScreen extends ScreenAdapter {
             sb.append("Tools used:").append(lineSeparator);
             sb.append("libGDX, Tiled, Android Studio, Inkscape, Paint.net");
 
-            GlyphLayout credits = new GlyphLayout();
-            credits.setText(font, sb.toString());
+            final GlyphLayout credits = new GlyphLayout();
+            credits.setText(this.font, sb.toString());
 
             this.font.draw(this.sb, credits, x, credits.height + 20);
 
@@ -209,7 +212,7 @@ public class GameScreen extends ScreenAdapter {
             if (Gdx.input.isTouched() || Gdx.input.isKeyPressed(Input.Keys.ANY_KEY)) {
                 this.npcs.clear();
                 this.camera.position.set(this.cameraStartPosition);
-                this.moon.reset();
+                this.moon.reset(this.scale);
 
                 getBackground().setOffsetX(0);
 
@@ -279,11 +282,10 @@ public class GameScreen extends ScreenAdapter {
             this.lastStar = TimeUtils.nanoTime();
         }
 
-        if (this.score > 9 && TimeUtils.nanoTime() - this.lastMeteor > 1_000_000_000 / (this.score / 2 - 4)) {
+        if (this.score > 9 && TimeUtils.nanoTime() - this.lastMeteor > 1_000_000_000 - this.score * 100) {
             final float rotationMultiplier = 1f - 2f / (this.score - 8f);
-            final float speedMultiplier = this.score < 20 ? 1f : MathUtils.lerp(1f, 5f, 1f - 20f / this.score);
 
-            this.npcs.add(new Meteor(rotationMultiplier, speedMultiplier));
+            this.npcs.add(new Meteor(rotationMultiplier));
             this.lastMeteor = TimeUtils.nanoTime();
         }
 
@@ -299,6 +301,13 @@ public class GameScreen extends ScreenAdapter {
                     final Star star = (Star) npc;
                     this.npcs.removeValue(npc, true);
                     this.score += star.getPoints();
+
+                    if (this.score > this.highScore) {
+                        this.highScore = this.score;
+                        this.prefs.putInteger(HIGH_SCORE, this.highScore);
+                        this.prefs.flush();
+                    }
+
                 } else if (npc instanceof Meteor) {
                     this.gameOver = true;
                 }
@@ -385,14 +394,6 @@ public class GameScreen extends ScreenAdapter {
 
     private boolean isCellFloor(final Cell cell) {
         return cell != null && cell.getTile().getProperties().get("floor", false, Boolean.class);
-    }
-
-    private void printDebug() {
-        final String spriteInfo = String.format("Sprite: %f, %f", this.moon.getX(), this.moon.getY());
-        final String mapInfo = String.format("Map: total width: %f; w,h: %f, %f; x,y: %f, %f", getMapWidth(), this.tiledMapRenderer.getViewBounds().width, this.tiledMapRenderer.getViewBounds().height, this.tiledMapRenderer.getViewBounds().x, this.tiledMapRenderer.getViewBounds().y);
-        final String mouseInfo = String.format("Mouse: %d, %d", Gdx.input.getX(), Gdx.input.getY());
-
-        this.font.draw(this.sb, String.format("%s%n%s%n%s", spriteInfo, mapInfo, mouseInfo), 10, 470);
     }
 
     private float getMapWidth() {

@@ -10,12 +10,12 @@ import com.badlogic.gdx.math.Rectangle;
 public class Moon extends GameSprite {
     private final Circle circle = new Circle();
 
-    public Moon() {
+    public Moon(float scale) {
         super(new Sprite(new Texture(Gdx.files.internal("moon.png"))));
 
         this.circle.setRadius(getRadius());
 
-        this.reset();
+        this.reset(scale);
     }
 
     @Override
@@ -54,10 +54,10 @@ public class Moon extends GameSprite {
         return Intersector.overlaps(this.circle, rectangle);
     }
 
-    public void reset() {
+    public void reset(float scale) {
         final float radius = getRadius();
 
-        this.getSprite().setPosition(10, 64.01f);
+        this.getSprite().setPosition(10 * scale, 64.01f * scale);
         this.circle.setPosition(this.getSprite().getX() + radius, this.getSprite().getY() + radius);
     }
 

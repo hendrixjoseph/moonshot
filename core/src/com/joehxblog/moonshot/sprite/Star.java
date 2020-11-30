@@ -10,6 +10,7 @@ public class Star extends GameSprite {
     private static final Texture STAR_IMAGE = new Texture(Gdx.files.internal("star.png"));
 
     private final static Color[] COLORS = {Color.YELLOW, Color.GREEN, Color.BLUE, Color.RED};
+    public static final int NUMBER_OF_COLORS = COLORS.length;
 
     private final int color;
 
