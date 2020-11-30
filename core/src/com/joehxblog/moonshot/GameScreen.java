@@ -376,7 +376,10 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private boolean rectanglePressed(final Rectangle rectangle) {
-        return Gdx.input.isTouched() && rectangle.contains(Gdx.input.getX(), Gdx.input.getY());
+
+        return Gdx.input.isTouched() && rectangle.contains(Gdx.input.getX(), Gdx.input.getY())
+                || Gdx.input.isTouched(0) && rectangle.contains(Gdx.input.getX(0), Gdx.input.getY(0))
+                || Gdx.input.isTouched(1) && rectangle.contains(Gdx.input.getX(1), Gdx.input.getY(1));
     }
 
     private Cell getTileCellAt(final float screenX, final float screenY) {
