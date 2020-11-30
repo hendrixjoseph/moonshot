@@ -161,13 +161,17 @@ public class GameScreen extends ScreenAdapter {
             y -= 10 * this.scale;
             x += 10 * this.scale;
 
-            float starX = 1;
+            float starX = x;
             glyph.setText(this.font, String.format("Each colored star is worth%na different number of points:"));
             this.font.draw(this.sb, glyph, x, y);
             y = y - this.glyph.height - this.font.getLineHeight();
 
             for (int starColor = 0; starColor < Star.NUMBER_OF_COLORS; starColor++) {
-                final Star star = new Star(starColor, 0, starX++ * x * 2, y, manager);
+                final Star star = new Star(starColor, 0, starX, y, manager);
+
+                if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+                    star.translateY(-star.getSprite().getHeight() / 2);
+                }
 
                 this.glyph.setText(this.font, String.format(Locale.US, ":%d", star.getPoints()));
 
@@ -175,7 +179,11 @@ public class GameScreen extends ScreenAdapter {
 
                 final Rectangle starRect = star.getRectangle();
 
-                this.font.draw(this.sb, this.glyph, starRect.x + starRect.width + 2, y + this.glyph.height);
+                starX += starRect.width;
+
+                this.font.draw(this.sb, this.glyph, starX, y + this.glyph.height);
+
+                starX += this.glyph.width;
             }
 
             y = y - this.font.getLineHeight();
@@ -185,7 +193,7 @@ public class GameScreen extends ScreenAdapter {
             y = y - this.glyph.height - this.font.getLineHeight();
 
             final Meteor meteor = new Meteor(manager);
-            meteor.getSprite().setPosition(x, y);
+            meteor.getSprite().setPosition(x, y - meteor.getSprite().getHeight());
             meteor.draw(this.sb);
 
             final String lineSeparator = String.format("%n");
