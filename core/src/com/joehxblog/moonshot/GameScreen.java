@@ -1,5 +1,6 @@
 package com.joehxblog.moonshot;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Preferences;
@@ -88,6 +89,10 @@ public class GameScreen extends ScreenAdapter {
         final int tileHeight = tiledMap.getProperties().get("tileheight", Integer.class);
         this.scale = h / (mapHeight * tileHeight);
 
+        if (Gdx.app.getType() == Application.ApplicationType.Android) {
+            this.font.getData().scale(this.scale);
+        }
+
         this.tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap, this.scale);
 
         this.moon = new Moon(this.scale);
@@ -101,7 +106,7 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void render(final float delta) {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        Gdx.gl.glClearColor(1, 0, 0, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -138,44 +143,53 @@ public class GameScreen extends ScreenAdapter {
 
             this.sb.draw(texture, 0, 0, w, h);
 
-            y -= 10;
-            final float x = 20;
+            y -= 10 * this.scale;
+            final float x = 20 * this.scale;
 
             float starX = 1;
-            y = y - this.font.draw(this.sb, String.format("Each colored star is worth%na different number of points:"), x, y).height - 20;
+            glyph.setText(this.font, String.format("Each colored star is worth%na different number of points:"));
+            this.font.draw(this.sb, glyph, x, y);
+            y = y - this.glyph.height - this.font.getLineHeight();
 
             for (int starColor = 0; starColor < Star.NUMBER_OF_COLORS; starColor++) {
                 final Star star = new Star(starColor, 0, starX++ * x * 2, y);
 
-                glyph.setText(this.font, String.format(Locale.US, ":%d", star.getPoints()));
+                this.glyph.setText(this.font, String.format(Locale.US, ":%d", star.getPoints()));
 
                 star.draw(this.sb);
 
                 final Rectangle starRect = star.getRectangle();
 
-                this.font.draw(this.sb, glyph, starRect.x + starRect.width + 2, y + glyph.height);
+                this.font.draw(this.sb, this.glyph, starRect.x + starRect.width + 2, y + this.glyph.height);
             }
 
-            y -= 20;
+            y = y - this.font.getLineHeight();
+            this.glyph.setText(this.font, "Avoid meteors!");
+            this.font.draw(this.sb, glyph, x, y);
 
-            y = y - this.font.draw(this.sb, "Avoid meteors!", x, y).height - 20;
+            y = y - this.glyph.height - this.font.getLineHeight();
 
             final Meteor meteor = new Meteor();
-            meteor.getSprite().setPosition(x, y - meteor.getSprite().getHeight());
+            meteor.getSprite().setPosition(x, y);
             meteor.draw(this.sb);
 
             final String lineSeparator = String.format("%n");
             final StringBuilder sb = new StringBuilder();
-            sb.append("Copyright 2020 Joseph Hendrix").append(lineSeparator);
-            sb.append("Background star field from https://opengameart.org/content/space-cartoony-tiled-texture").append(lineSeparator);
-            sb.append("Meteors from https://opengameart.org/content/meteor-animated-64x64").append(lineSeparator);
-            sb.append("Tools used:").append(lineSeparator);
-            sb.append("libGDX, Tiled, Android Studio, Inkscape, Paint.net");
+            sb.append("Copyright 2020 Joseph Hendrix")
+                    .append(lineSeparator)
+                    .append("Background star field from https://opengameart.org/content/space-cartoony-tiled-texture")
+                    .append(lineSeparator)
+                    .append("Meteors from https://opengameart.org/content/meteor-animated-64x64")
+                    .append(lineSeparator)
+                    .append("Moon image from NASA")
+                    .append(lineSeparator)
+                    .append("Tools used:")
+                    .append(lineSeparator)
+                    .append("libGDX, Tiled, Android Studio, Inkscape, Paint.net");
 
-            glyph.setText(this.font, sb.toString());
+            this.glyph.setText(this.font, sb.toString());
 
-            this.font.draw(this.sb, glyph, x, glyph.height + 20);
-
+            this.font.draw(this.sb, this.glyph, x, this.glyph.height + 20 * this.scale);
         }
 
         String message = "";
@@ -194,9 +208,9 @@ public class GameScreen extends ScreenAdapter {
             final int w = Gdx.graphics.getWidth();
             final int h = Gdx.graphics.getHeight();
 
-            glyph.setText(this.font, message);
+            this.glyph.setText(this.font, message);
 
-            this.font.draw(this.sb, message, (w - glyph.width) / 2, (h + glyph.height) / 2);
+            this.font.draw(this.sb, message, (w - this.glyph.width) / 2, (h + this.glyph.height) / 2);
         }
 
         this.sb.end();
@@ -224,16 +238,17 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void playGame(final float delta) {
-        final float motion = 200 * delta;
+        final float motion = 200 * delta * this.scale;
 
         final boolean cannotPanRight = this.tiledMapRenderer.getViewBounds().x + motion > getMapWidth() - this.tiledMapRenderer.getViewBounds().width;
         final boolean cannotPanLeft = this.tiledMapRenderer.getViewBounds().x - motion < 0;
+        final float half = (Gdx.graphics.getWidth() - this.moon.getWidth()) / 2;
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || rectanglePressed(this.leftButton)) {
             final Array<Cell> cell = getTilesToTheLeft(this.moon.getSprite(), motion);
 
             if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
-                if (cannotPanLeft || cannotPanRight && this.moon.getX() > 250) {
+                if (cannotPanLeft || cannotPanRight && this.moon.getX() > half) {
                     if (this.moon.getX() - motion > 0) {
                         this.moon.translateX(-motion);
                     }
@@ -249,7 +264,7 @@ public class GameScreen extends ScreenAdapter {
             final Array<Cell> cell = getTilesToTheRight(this.moon.getSprite(), motion);
 
             if (!cell.select(this.cellFloorPredicate).iterator().hasNext()) {
-                if (cannotPanRight || cannotPanLeft && this.moon.getX() < 250) {
+                if (cannotPanRight || cannotPanLeft && this.moon.getX() < half) {
                     if (this.moon.getX() + motion < this.tiledMapRenderer.getViewBounds().width - this.moon.getWidth()) {
                         this.moon.translateX(motion);
                     }
@@ -321,7 +336,24 @@ public class GameScreen extends ScreenAdapter {
     private void panCameraRight(final float motion) {
         this.camera.translate(motion, 0);
         final MapLayer background = getBackground();
-        background.setOffsetX(background.getOffsetX() + motion);
+
+        float newOffset = background.getOffsetX() + motion;
+
+        if (this.tiledMapRenderer.getViewBounds().x < 256) {
+            if (newOffset > 0) {
+                newOffset -= 256;
+            } else if (newOffset < -256) {
+                newOffset += 256;
+            }
+        } else {
+            if (newOffset < 0) {
+                newOffset += 256;
+            } else if (newOffset > 256) {
+                newOffset -= 256;
+            }
+        }
+
+        background.setOffsetX(newOffset);
 
         for (final GameSprite npc : this.npcs) {
             npc.translateX(-motion);
