@@ -99,7 +99,7 @@ public class GameScreen extends ScreenAdapter {
         this.scale = h / (mapHeight * tileHeight);
 
         if (Gdx.app.getType() == Application.ApplicationType.Android) {
-            this.font.getData().scale(this.scale);
+            this.font.getData().scale(this.scale / 2);
         }
 
         this.tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap, this.scale);
@@ -139,9 +139,13 @@ public class GameScreen extends ScreenAdapter {
             npc.draw(this.sb);
         }
 
-        float y = Gdx.graphics.getHeight() - 10;
-        y = y - this.font.draw(this.sb, String.format(Locale.US, "Score: %d", this.score), 10, y).height - 10;
-        y = y - this.font.draw(this.sb, String.format(Locale.US, "High Score: %d", this.highScore), 10, y).height;
+        float y = Gdx.graphics.getHeight() - 10 * scale;
+        float x = 10 * scale;
+        glyph.setText(this.font, String.format(Locale.US, "Score: %d", this.score));
+        this.font.draw(this.sb, glyph, x, y);
+        y = y - glyph.height - this.font.getLineHeight();
+        glyph.setText(this.font,String.format(Locale.US, "High Score: %d", this.highScore));
+        this.font.draw(this.sb, glyph, x, y);
 
         if (this.newGame || this.gameOver) {
             final float w = Gdx.graphics.getWidth();
@@ -155,7 +159,7 @@ public class GameScreen extends ScreenAdapter {
             this.sb.draw(texture, 0, 0, w, h);
 
             y -= 10 * this.scale;
-            final float x = 20 * this.scale;
+            x += 10 * this.scale;
 
             float starX = 1;
             glyph.setText(this.font, String.format("Each colored star is worth%na different number of points:"));
