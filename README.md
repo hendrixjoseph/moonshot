@@ -1,6 +1,6 @@
 # moonshot
 
-Created for GitHub Game Off 2020.
+Created for [GitHub Game Off 2020](https://itch.io/jam/game-off-2020).
 
 You are the moon! Collect stars while avoiding meteors. Can you get a high score?
 
