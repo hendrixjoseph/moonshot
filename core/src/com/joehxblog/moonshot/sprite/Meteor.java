@@ -21,7 +21,7 @@ public class Meteor extends GameSprite {
         if (METEOR_ANIMATION == null || !manager.contains(FILENAME)) {
             final Texture walkSheet = manager.get(FILENAME, Texture.class);
 
-            final TextureRegion[][] tmp = TextureRegion.split(walkSheet, 16, 32);
+            final TextureRegion[][] tmp = TextureRegion.split(walkSheet, 48, 96);
 
             METEOR_ANIMATION = new Animation<>(0.125f, tmp[0]);
         }
