@@ -11,6 +11,7 @@ You are the moon! Collect stars while avoiding meteors. Can you get a high score
 * [Android Studio](https://developer.android.com/studio)
 * [Inkscape](https://inkscape.org/)
 * [Paint.net](https://www.getpaint.net/)
+* [Notepad++](https://notepad-plus-plus.org/)
 * [git](https://git-scm.com/) & [GitHub](https://github.com/)
 
 ## assets used
